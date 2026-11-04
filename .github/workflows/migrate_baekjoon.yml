@@ -1,0 +1,44 @@
+
+name: Migrate BaekjoonHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Move existing files"
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preview
+        run: python3 .github/scripts/migrate_baekjoon.py
+
+      - name: Apply
+        if: inputs.apply == true
+        run: python3 .github/scripts/migrate_baekjoon.py --apply
+
+      - name: Commit
+        if: inputs.apply == true
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "chore: migrate BaekjoonHub solutions"
+          git push origin HEAD:main
